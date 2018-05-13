@@ -1,9 +1,37 @@
-class Planet(object):
-    def __init__(self, i):
+from math import sqrt
 
-sun = [1.989110e30, 6.9550810e6, -1.318179998275412E+06, 4.010555758878363E+05, -4.493504117531995E-03, -1.503318013232030E-02]
-mercury = [3.302210e23, 2.439710e3, 4.183977317411777E+07, -4.422147843777118E+07, 2.534767960872066E+01, 3.616526476323813E+01]
-venus = [4.868510e24, 6.051810e3, -8.208050566798364E+07, -7.152072408769740E+07, 2.303847371249511E+01, -2.633317430531520E+01]
+def magnitude(x, y):
+    return sqrt(x**2 + y**2)
+
+class Vec(object):
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.mag = magnitude(x, y)
+    def __add__(self, otherVector):
+        self.x += otherVector.x
+        self.y += otherVector.y
+        self.updateMag()
+    def __sub__(self, otherVector):
+        self.x -= otherVector.x
+        self.y -= otherVector.y
+        self.updateMag()
+    def updateMag(self):
+        self.mag = magnitude(self.x, self.y)
+
+class Planet(object):
+    def __init__(self, info):
+        self.mass = info[0]
+        self.radius = info[1]
+        self.pos = Vec(info[3], info[4])
+        self.vel = Vec(info[4], info[5])
+        self.p = self.mass * self.vel.mag
+    def distTo(self, other):
+        return ((self.pos.x-other.pos.x)**2+(self.pos.y-other.pos.y)**2)
+    def update(self, dt):
+        self.p += self.force*dt
+        self.vel = self.p/self.mass
+        self.pos += self.vel*dt
 
 planets = [sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, pluto]
 
@@ -16,12 +44,4 @@ for planet in planets:
             planet.force += (G*planet.mass*otherPlanet.mass)/planet.distTo(OtherPlanet)
 
 for planet in planets:
-    plane.update(dt)
-
-class Planet(object):
-    def distTo(self, other):
-        return ((self.x-other.x)**2+(self.y-other.y)**2)
-    def update(self, dt):
-        self.p += self.force*dt
-        self.vel = self.p/self.mass
-        self.pos += self.vel*dt
+    planet.update(dt)
