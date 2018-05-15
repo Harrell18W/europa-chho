@@ -1,0 +1,93 @@
+from vpython import *
+
+AE = 1000*149597871
+G = 6.67384e-11
+
+def forceOf(planet, otherPlanet):
+    global G
+    r = planet.pos - otherPlanet.pos
+    rmag = mag(r)
+    runit = norm(r)
+    return -(G*planet.mass*otherPlanet.mass)/(rmag**2)*runit
+
+def updatePlanet(planet, dt):
+    planet.momentum += planet.force*dt
+    planet.velocity = planet.momentum/planet.mass
+    planet.pos += planet.velocity*dt
+
+data = open("data.txt", 'r')
+planetNames = []
+for line in data:
+    line = str(line)[:-2]
+    vals = line.split()
+    varname, mass, rad, posx, posy, velx, vely = vals[0], vals[1], vals[2], vals[3], vals[4], vals[5], vals[6]
+    planetNames.append(varname)
+    comm = varname + 'Info = [' + mass + ', ' + rad + ', ' + posx + ', ' + posy + ', ' + velx + ', ' + vely + ']'
+    exec(comm)
+
+print(planetNames)
+
+planets = []
+
+for i in range(len(planetNames)):
+    comm = planetNames[i] + 'pos = vec(' + planetNames[i] + 'Info[2] , ' + planetNames[i] + 'Info[3], 0)'
+    exec(comm)
+    comm = planetNames[i] + 'vel = vec(' + planetNames[i] + 'Info[4] , ' + planetNames[i] + 'Info[5], 0)'
+    exec(comm)
+    comm = 'R' + planetNames[i] + ' = ' + planetNames[i] + 'Info[1]'
+    exec(comm)
+    comm = 'M' + planetNames[i] + ' = ' + planetNames[i] + 'Info[0]'
+    exec(comm)
+
+    comm = planetNames[i] + ' = sphere(pos=' + planetNames[i] + 'pos, radius=R' + planetNames[i] + ', color=color.green, make_trail=True)'
+    exec(comm)
+    
+    comm = planetNames[i] + '.mass = M' + planetNames[i]
+    exec(comm)
+
+    comm = planetNames[i] + '.velocity = ' + planetNames[i] + 'vel'
+    exec(comm)
+
+    comm = 'planets.append(' + planetNames[i] + ')'
+    exec(comm)
+
+tstr = "Time: {:.0f} days".format(0)
+tlabel = label(pos=vector(0, 1.2*mag(marspos), 0), text=tstr)
+launchstr = 'Click to Start'
+launchlabel=label(pos=vector(0, -1.2*mag(marspos), 0), text=launchstr)
+
+dt = 3600
+day = 24*3600
+t = 0
+
+scene.autoscale = False
+
+for planet in planets:
+    planet.momentum = planet.velocity*planet.mass
+
+while True:
+    rate(100)
+
+    if t == 0:
+        launchstr = "Click to Start"
+        launchlabel.text = launchstr
+        scene.waitfor('click')
+        llaunchstr = "Running..."
+        launchlabel.text = launchstr
+
+    for planet in planets:
+        print(planet.mass)
+        planet.force = vec(0, 0, 0)
+        for otherPlanet in planets:
+            if otherPlanet is not planet:
+                planet.force += forceOf(planet, otherPlanet)
+        updatePlanet(planet, dt)
+
+    print(earth.pos)
+
+    t += dt
+    tstr = "Time: {:0f} days".format(t/day)
+    tlabel.text = tstr
+
+
+    
