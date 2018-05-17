@@ -4,7 +4,7 @@ mp = float(input("Mass of payload in kg: ")) #payload mass, kg
 vf = float(input("Final velocity in m/s: ")) #final velocity, m/s
 
 m0 = 561774 + mp #initial mass, kg
-ve = 4860.54 #exhaust velocity, m/s
+ve = 3692.74 #exhaust velocity, m/s
 
 m1 = m0/e**(vf/ve)
 
