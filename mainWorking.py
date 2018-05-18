@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 from vpython import *
 
 # Closest Europa Approach:
@@ -17,19 +16,13 @@ from vpython import *
 # minDistJ: 
 # minDistE: 
 
-# -------------------- Constants -------------------
 AU = 149597871000
 G = 6.67384E-11
-# -------------------- Constants End -------------------
 
-# -------------------- Rocket Launch Values -------------------
 launchDay = 72.7
 launchDir = -4.8
 phi = 38.7
 vInitial = 8501
-# -------------------- Rocket Launch Values End -------------------
-
-# -------------------- Rocket Constants -------------------
 rInitial = 5.6*6.4E+06
 orbitalDist = 675088558
 vVec = vec(cos(radians(launchDir)), sin(radians(launchDir)), cos(radians(phi)))
@@ -38,14 +31,10 @@ rocketPosRel = vVec * rInitial
 Mrocket = 334500
 MFCon = 4067 + 21054 + 2316
 MFuel = 42630 + 284089 + 20830
-# -------------------- Rocket Constants End -------------------
 
-# -------------------- Scene Effects -------------------
 scene.width = 1600
 scene.height = 900
-# -------------------- Scene Effects End -------------------
 
-# -------------------- Functions -------------------
 def forceOf(planet, otherPlanet):
     global G
     r = planet.pos - otherPlanet.pos
@@ -73,9 +62,7 @@ def updateDistLabel():
 
 def JOI(dt):
     rocket.force -= rocket.reverseThrust
-# -------------------- Functions End -------------------
 
-# -------------------- Data Import -------------------
 data = open("data.txt", 'r')
 planetData = []
 planetNames = []
@@ -104,9 +91,7 @@ for i in range(len(planetNames)):
     exec(planetNames[i] + '.mass = M' + planetNames[i])
     exec(planetNames[i] + '.velocity = ' + planetNames[i] + 'vel')
     exec('planets.append(' + planetNames[i] + ')')
-# -------------------- Data Import End -------------------
 
-# -------------------- Label and Rocket Init -------------------
 tstr = "Time: {:.0f} days".format(0)
 tlabel = label(pos=vector(0, 20*AU, 0), text=tstr)
 launchstr = 'Click to Start'
@@ -136,9 +121,7 @@ for i in range(len(planetNames)):
     exec('pstr = "' + planetNames[i] + '"')
     exec(planetNames[i] + 'label = label(pos=vector(0, 0.3*AU, 0) + ' + planetNames[i] + 'pos , text = pstr)')
     exec('planetLabels.append(' + planetNames[i] + 'label)')
-# -------------------- Label and Rocket Init End -------------------
 
-# -------------------- Main Loop -------------------
 distanceTraveled = 0
 
 distances = []
@@ -187,42 +170,34 @@ while True:
 
     if launched:
         rocket.force = vec(0, 0, 0)
-        # Sum up the force of all the planets on the rocket.
         for planet in planets:
             rocket.force += forceOf(rocket, planet)
-        # Update the position, velocity, and momentum values for the rocket
+        if distTo(rocket, jupiter) < 500000000:
+            if mag(rocket.velocity-jupiter.velocity) > 1000:
+                print("Performing JOI")
+                JOI(dt)
         updatePlanet(rocket, dt)
-        # Calculate the arc length of the path taken to Europa
         distanceTraveled += mag(rocket.velocity*dt)
-        # Update the line and label showing the distance from the rocket to Europa
         updateDistLabel()
+        #print("Days:", round(t/day, 2), "\tThe rocket has traveled", distanceTraveled, "meters.")
     else:
-        # If the rocket has not launched yet, keep its position constant relative to Earth
         rocket.pos = earth.pos + rocketPosRel
 
-    # If it is within half a day of the specified launch day, consider the rocket launched.
     if abs(t/day - launchDay) < 0.5:
-        # Toggle, only run this code once
         if not launched:
-            # The rocket has launched
             launched = True
-            # Lock the camera to the rocket
             scene.camera.follow(rocket)
-            # Begin updating the line and label showing the distance from the rocket to Europa
             updateDistLabel()
-            # Make the line and label visible
             distlabel.visible = True
             distRtoE.visible = True
-            # Output that the rocket has launched.
-            print("The rocket has launched on", datetime(2020, 3, 20)+timedelta(t/day))
+            print("-----Launched-----")
             rocket.pos = earth.pos + rocketPosRel
             rocket.momentum = initRVel*rocket.mass + earth.velocity*rocket.mass
             rocket.velocity = rocket.momentum/rocket.mass
-    
-    # Update the time value by increment dt and update time label
+
     t += dt
     tstr = "Time: {:0f} days".format(t/day)
     tlabel.text = tstr
-# -------------------- Main Loop End -------------------
+
 
     
